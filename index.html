@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mina Flashcard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <div id="app">
+        <section id="home-screen" class="screen active">
+            <div class="app-header">
+                <h1>Mina Flashcard 🇯🇵</h1>
+                <div class="streak-badge">
+                    <span id="streak-fire">🔥</span> 
+                    <span id="streak-count">0</span> ngày
+                </div>
+            </div>
+            
+            <div class="content-body">
+                <div id="daily-quests" class="quest-box">
+                    <h3>🎯 Nhiệm vụ hôm nay</h3>
+                    <ul id="quest-list"></ul>
+                </div>
+
+                <div class="main-actions">
+                    <button onclick="createNewDeck()" class="btn-action primary-gradient large">+ Bài mới</button>
+                    <div class="row">
+                        <button onclick="showScreen('stats-screen')" class="btn-action purple">📊 Thống kê</button>
+                        <button onclick="openQuickStudy()" class="btn-action orange">⚡ Học nhanh</button>
+                    </div>
+                </div>
+                
+                <div class="section-title">
+                    <h3>Danh sách bài học</h3>
+                    <small onclick="exportData()">Sao lưu</small>
+                </div>
+                <div id="deck-list" class="deck-list"></div>
+                
+                <div class="footer-link">
+                    <label for="import-file">Khôi phục dữ liệu</label>
+                    <input type="file" id="import-file" onchange="importData(event)" style="display:none;">
+                </div>
+            </div>
+        </section>
+
+        <section id="quick-setup-screen" class="screen">
+            <div class="nav-header">
+                <button onclick="showScreen('home-screen')" class="btn-icon">✕</button>
+                <h2>Học nhanh</h2>
+                <div style="width:40px"></div>
+            </div>
+            <div class="content-body">
+                <div class="card-box">
+                    <h3>Số lượng thẻ</h3>
+                    <input type="number" id="quick-count" value="10" min="5" class="input-styled">
+                </div>
+                <div class="card-box flex-grow">
+                    <h3>Chọn nguồn</h3>
+                    <div id="quick-deck-list" class="scroll-list"></div>
+                </div>
+            </div>
+            <div class="bottom-dock">
+                <button onclick="startQuickSession()" class="btn-action primary-gradient full">Bắt đầu ngay 🚀</button>
+            </div>
+        </section>
+
+        <section id="stats-screen" class="screen">
+            <div class="nav-header">
+                <button onclick="showScreen('home-screen')" class="btn-icon">⬅</button>
+                <h2>Thống kê</h2>
+                <div style="width:40px"></div>
+            </div>
+            <div class="content-body">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span id="today-time">0p</span>
+                        <small>Hôm nay</small>
+                    </div>
+                    <div class="stat-item">
+                        <span id="total-days">0</span>
+                        <small>Tổng ngày</small>
+                    </div>
+                </div>
+                <div class="card-box">
+                    <h3>⏳ 7 ngày qua</h3>
+                    <div class="bar-chart" id="weekly-chart"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="deck-detail-screen" class="screen">
+            <div class="nav-header">
+                <button onclick="showScreen('home-screen')" class="btn-icon">⬅</button>
+                <h2 id="current-deck-name" class="truncate">Chi tiết</h2>
+                <button onclick="deleteCurrentDeck()" class="btn-icon danger">🗑️</button>
+            </div>
+            
+            <div class="content-body">
+                <div class="stats-mini">
+                    <div><b id="card-count">0</b> thẻ</div>
+                    <div class="divider"></div>
+                    <div><b id="star-count">0</b> sao</div>
+                </div>
+
+                <div class="action-grid">
+                    <button onclick="startStudy(false)" class="btn-action green">Học bài</button>
+                    <button onclick="startQuiz(false)" class="btn-action blue">Trắc nghiệm</button>
+                    <button onclick="startStudy(true)" class="btn-action yellow">Ôn thẻ sao</button>
+                    <button onclick="startQuiz(true)" class="btn-action orange">Quiz sao</button>
+                </div>
+                
+                <div class="tool-row">
+                    <button onclick="showScreen('import-screen')" class="btn-small">📥 Thêm từ</button>
+                    <button onclick="shuffleDeck()" class="btn-small">🔀 Trộn thẻ</button>
+                </div>
+
+                <div id="card-list" class="card-list-container"></div>
+            </div>
+        </section>
+
+        <section id="import-screen" class="screen">
+            <div class="nav-header">
+                <button onclick="closeImport()" class="btn-icon">✕</button>
+                <h2>Nhập từ vựng</h2>
+                <button onclick="handleBulkImport()" class="btn-text">Lưu</button>
+            </div>
+            <div class="content-body">
+                <p class="guide-text">Nhập: <b>Mặt trước - Mặt sau</b><br>Dùng dấu phẩy ở mặt sau để xuống dòng.</p>
+                <textarea id="bulk-input" class="textarea-styled" placeholder="Ví dụ:&#10;学生 - がくせい, HỌC SINH&#10;先生 - せんせい, GIÁO VIÊN"></textarea>
+            </div>
+        </section>
+
+        <section id="study-screen" class="screen">
+            <div class="nav-header">
+                <button onclick="stopStudySession()" class="btn-icon">✕</button>
+                <span id="study-progress" class="progress-pill">1/10</span>
+                <button onclick="toggleStarCurrent()" class="btn-icon">⭐</button>
+            </div>
+            
+            <div class="flashcard-area">
+                <div class="card-scene">
+                    <div class="card-object" id="main-card" onclick="flipCard()">
+                        <div class="face front">
+                            <div id="star-indicator" class="star-badge hidden">⭐</div>
+                            <div class="card-content">
+                                <h2 id="front-text">Tiếng Nhật</h2>
+                                <small>Chạm để lật</small>
+                            </div>
+                            <button class="speaker-btn" onclick="speakCurrent(event)">🔊</button>
+                        </div>
+                        <div class="face back">
+                            <div class="card-content" id="back-text">Tiếng Việt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-dock">
+                <button onclick="markKnown(false)" class="btn-control wrong">Chưa thuộc</button>
+                <button onclick="markKnown(true)" class="btn-control correct">Đã thuộc</button>
+            </div>
+        </section>
+
+        <section id="quiz-screen" class="screen">
+            <div class="nav-header">
+                <button onclick="stopStudySession()" class="btn-icon">✕</button>
+                <span id="quiz-progress" class="progress-pill">1/10</span>
+                <span id="quiz-score" class="score-pill">0</span>
+            </div>
+            
+            <div class="quiz-body">
+                <div class="question-card">
+                    <h2 id="quiz-question">?</h2>
+                    <button class="speaker-btn-sm" onclick="speakCurrent(event)">🔊</button>
+                </div>
+
+                <div class="quiz-wrapper">
+                    <div id="quiz-overlay" onclick="revealAnswers()">
+                        <span>👁️ Hiện đáp án</span>
+                    </div>
+                    <div id="quiz-options" class="options-grid blurred-grid"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
